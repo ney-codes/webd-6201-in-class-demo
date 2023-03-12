@@ -1,5 +1,46 @@
 (function () {
 
+    /**
+     * This function uses AJAX to open a connection to the server and returns 
+     * a data payload to the callback function
+     *
+     * @param {string} method
+     * @param {string} url
+     * @param {function} callback
+     */
+    function AjaxRequest(method, url, callback) {
+        // AJAX
+        // instantiate the XHR Object
+        let XHR = new XMLHttpRequest()
+
+        // add event listener for readystatechange
+        XHR.addEventListener("readystatechange", () => {
+            if (XHR.readyState === 4 && XHR.status === 200) {
+                if (typeof callback === 'function') {
+                    callback(XHR.responseText)
+                } else {
+                    console.error("ERROR: callback is not a function")
+                }
+            }
+        })
+
+        // connect and get data
+        XHR.open(method, url)
+
+        // send request to server to await response
+        XHR.send()
+    }
+
+    /**
+     * Load the static header 
+     *
+     * @param {HTML} html_data
+     */
+    function LoadHeader(html_data) {
+        $('#navigationBar').html(html_data)
+        $(`li>a:contains(${ document.title })`).addClass('active')
+    }
+
     function DisplayHome() {
         $("#RandomButton").on("click", function() {
             location.href = 'contact.html'
@@ -25,8 +66,38 @@
         }
     }
 
+    function ValidateInput(inputFieldID, regularExpression, exception) {
+        let messageArea = $('#messageArea').hide()
+
+        $('#' + inputFieldID).on("blur", function() {
+            let inputText = $(this).val()
+
+            if (!regularExpression.test(inputText)) {
+                // failure to match full name with regex
+
+                $(this).trigger("focus").trigger("select")
+
+                messageArea.addClass("alert alert-danger").text(exception).show()
+            } else {
+                // success in matching full name with regex
+
+                messageArea.removeAttr("class").hide()
+            }
+        })
+    }
+
+    function ContactFormValidate() {
+        let emailAddressPattern = /^[\w-\.]+@([\w-]+\.)+[\w-][\D]{2,10}$/g
+        let fullNamePattern = /^([A-Z][a-z]{1,25})((\s|,|-)([A-Z][a-z]{1,25}))*(\s|-|,)*([A-Z][a-z]{1,25})*$/g
+
+        ValidateInput("fullName", fullNamePattern, "Please enter a valid Full name which means a capitalized first name and capitalized last name")
+        ValidateInput("emailAddress", emailAddressPattern, "Please enter a valid Email Address")
+    }
+
     function DisplayContacts() {
         console.log("Contact Us Page")
+
+        ContactFormValidate()
 
         let submitButton = document.getElementById("submitButton")
         let subscribeCheckbox = document.getElementById("subscribeCheckbox")
@@ -94,6 +165,7 @@
     }
 
     function DisplayEditPage() {
+        ContactFormValidate()
         let page = location.hash.substring(1)
 
         switch(page) {
@@ -148,28 +220,44 @@
     function DisplayReferences() {
         console.log("References Page")
     }
+
+    function DispayLoginPage() {
+        console.log("Login Page")
+    }
+    
+    function DisplayRegisterPage() {
+        console.log("Registration Page")
+    }
     
     function Start() {
         console.log("App Started Successfully!")
 
+        AjaxRequest("GET", "./static/header.html", LoadHeader)
+
         switch (document.title) {
-            case "Home - WEBD6201 Demo":
+            case "Home":
                 DisplayHome()
                 break
-            case "Projects - WEBD6201 Demo":
+            case "Projects":
                 DisplayProjects()
                 break
-            case "Contact Us - WEBD6201 Demo":
+            case "Contact Us":
                 DisplayContacts()
                 break
-            case "Contact List - WEBD6201 Demo":
+            case "Contact List":
                 DisplayContactList()
                 break
-            case "References - WEBD6201 Demo":
+            case "References":
                 DisplayReferences()
                 break
-            case "Edit - WEBD6201 Demo":
+            case "Edit":
                 DisplayEditPage()
+                break
+            case "Login":
+                DisplayLoginPage()
+                break
+            case "Register":
+                DisplayRegisterPage()
                 break
         }
         
